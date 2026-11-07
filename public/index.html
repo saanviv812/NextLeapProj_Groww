@@ -330,7 +330,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
     <h3>Try the flows</h3>
     <ol class="guide" id="guide">
      <li data-g="1"><div><b>Set up reminders</b><small>Offered after the first SIP goes through</small></div><button class="btn sm line" data-go="setup">Start</button></li>
-     <li data-g="2"><div><b>Get a reminder</b><small>4 days before a tight month</small></div><button class="btn sm line" data-go="checkin">Show</button></li>
+     <li data-g="2"><div><b>Get a reminder</b><small>5 days before a tight month</small></div><button class="btn sm line" data-go="checkin">Show</button></li>
      <li data-g="3"><div><b>Skip a SIP</b><small>Also try: <button class="linkbtn" data-go="late" style="font-size:12.5px;padding:0">too close to the date</button> or <button class="linkbtn" data-go="third" style="font-size:12.5px;padding:0">3rd in a row</button></small></div><button class="btn sm line" data-go="skip">Show</button></li>
      <li data-g="4"><div><b>A SIP payment fails</b><small>A calm message and a one-tap way to pay</small></div><button class="btn sm line" data-go="failed">Show</button></li>
      <li data-g="5"><div><b>Cancel a SIP</b><small>Gentler options come first</small></div><button class="btn sm line" data-go="cancel">Show</button></li>
@@ -385,7 +385,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
    <h2>Three steps</h2>
    <ol class="flowl">
     <li><b>Fit:</b> three quick questions after the first instalment succeeds: how income arrives (fixed date, last working day, it varies, or from savings), months that cost more, and an optional sentence the AI reads. Rules suggest a debit date a few days after payday and after regular bills, and list only the months that need a reminder. You can edit anything, and you pick what you'd rather do in a tight month.</li>
-    <li><b>Bend:</b> before those months, a calm message arrives 4 days before the debit, before the free-skip deadline, with two buttons: "Keep" or your own plan. "Pay a smaller amount" is the suggested plan, because a smaller payment still counts as an active month and a skip doesn't. Tapping the message opens all the options. Doing nothing changes nothing.</li>
+    <li><b>Bend:</b> before those months, a calm message arrives 5 days before the debit, leaving 2 days before the free-skip deadline, with two buttons: "Keep" or your own plan. "Pay a smaller amount" is the suggested plan, because a smaller payment still counts as an active month and a skip doesn't. Tapping the message opens all the options. Doing nothing changes nothing.</li>
     <li><b>Recover:</b> works for everyone, even without setup. If a debit fails, you're told your invested money is safe, can pay it by UPI within Groww's 2-working-day window, and can move the date if it doesn't suit your payday. Missing 3 in a row cancels the SIP, and the app says so plainly before it can happen.</li>
    </ol>
   </div>
@@ -501,7 +501,7 @@ async function readSentence(text){const r=redact(text);const s=await samplePromi
 
 /* ============ AI: reply reader ============ */
 const OPTS={keep:"Keep it as planned",use_flex:"Skip this month (free)",move_date:"Move the date",pay_less:"Pay less this month",pay_pending:"Pay this instalment by UPI",stop_info:"What stopping really does"};
-const REPLY_PROMPT=(t,stage)=>`You read a first-time SIP investor's reply to a calm message from their investing app (${stage==="after_failure"?"their SIP instalment just failed":"their SIP debit is in about 4 days and this month may be tight"}). Return ONLY JSON:
+const REPLY_PROMPT=(t,stage)=>`You read a first-time SIP investor's reply to a calm message from their investing app (${stage==="after_failure"?"their SIP instalment just failed":"their SIP debit is in about 5 days and this month may be tight"}). Return ONLY JSON:
 {"scope":"in_scope|advice_request|off_topic|insufficient","options":["..."],"reply":"..."}
 - scope: in_scope for their own SIP situation. advice_request if they ask which fund to pick, whether markets will rise or fall, whether to invest a lump sum, or for any recommendation. off_topic if not about their mutual fund SIP. insufficient if you can't tell what they want.
 - options: 1-3 ids from ONLY this list, most useful first: ${Object.keys(OPTS).join(", ")}. If they want to stop, include stop_info plus one way to keep the SIP active. After a failure, include pay_pending. For advice_request, off_topic or insufficient return [].
@@ -537,7 +537,7 @@ function buildMonths(){const today=new Date();today.setHours(0,0,0,0);
    if(weekend&&gap<=5){reasons.push(`Payday falls on a ${DOW[pd.getDay()]==="Sun"?"Sunday":"Saturday"} (${fmt(pd)}), so salary may come late`);status=gap<=3?"risky":"watch"}
   } else if((state.pay.type==="varies"||state.income==="variable")&&state.checkEvery){reasons.push("You asked for a check-in before every debit");status="watch"}
   if(state.heavy.has(m+1)){reasons.unshift(`${MON[m]} is one of your heavy months`);status="risky"}
-  out.push({y,m,debit,payday:pd,reasons,status,checkin:addDays(debit,-4),deadline:addDays(debit,-3)});
+  out.push({y,m,debit,payday:pd,reasons,status,checkin:addDays(debit,-5),deadline:addDays(debit,-3)});
   m++;if(m>11){m=0;y++}}
  state.months=out;return out}
 function suf(n){return n%10===1&&n!==11?"st":n%10===2&&n!==12?"nd":n%10===3&&n!==13?"rd":"th"}
@@ -595,6 +595,7 @@ function after(x){const i=S.months.indexOf(x);for(let j=i+1;j<S.months.length;j+
 function isLate(x){return dayDiff(today0(),x.debit)<=2}
 function reminders(){return upcoming().filter(x=>x.status!=="ok"||missesBefore(x)>=2)}
 function reason(x){if(missesBefore(x)>=2)return"Your last 2 SIPs were skipped";const r=x.reasons[0]||"";if(/heavy/.test(r))return`${MONF[x.m]} is usually expensive for you`;if(/Saturday|Sunday/.test(r))return`Payday falls on a ${/Sunday/.test(r)?"Sunday":"Saturday"} this month`;return"Your monthly check-in"}
+function relDay(x){const n=dayDiff(remDate(x),x.deadline);return n<=0?"today":n===1?"tomorrow":`in ${n} days`}
 function remDate(x){return x.checkin<today0()?today0():x.checkin}
 
 /* ---------- navigation ---------- */
@@ -635,7 +636,7 @@ function editFlow(){sheet("Edit SIP",`<label class="lab" for="eAmt">SIP amount</
 function remFlow(x){const pref=S.plan;
  const rows=[["pay_less",I.less,"Pay a smaller amount",`Only in ${MONF[x.m]}. Back to ${rupee(S.amt)} after`],["use_flex",I.skip,"Skip this SIP","No charges. Your SIP continues after"],["move_date",I.cal,"Change SIP date","For this and future SIPs"]];
  rows.sort((a,b)=>(b[0]===pref)-(a[0]===pref));
- sheet(`${MONF[x.m]} SIP on ${dshort(x.debit)}`,`<p class="muted" style="font-size:14px">You can change it for free until ${dshort(x.deadline)}.</p>
+ sheet(`${MONF[x.m]} SIP on ${dshort(x.debit)}`,`<p style="font-size:14px;margin:0 0 4px"><b>Last day to change: ${fmt(x.deadline)} (${relDay(x)})</b></p><p class="muted" style="font-size:14px">After that, this SIP can't be skipped or changed, and ${rupee(S.amt)} is taken on ${dshort(x.debit)}.</p>
   <div>${rows.map(r=>`<button class="srow" data-k="${r[0]}"><span class="ii">${r[1]}</span><span class="it"><b>${r[2]}</b><small>${r[3]}</small></span><span class="chev">›</span></button>`).join("")}
   <button class="srow" data-k="ask"><span class="ii">${I.chat}</span><span class="it"><b>Something else?</b><small>Tell us</small></span><span class="chev">›</span></button></div>`,
   [["Keep as is",()=>{closeSheets();toast(`All set for ${MONF[x.m]}`)},"line"]]);
@@ -734,13 +735,13 @@ async function buildMap(){readSettings();syncPay();S.outflows=[];S.conflict="";S
  buildMonths();logRules()}
 function logRules(){$("#hRules").textContent=`Payday: ${payLabel(S.pay)}\nSIP date: ${S.deb}\nBills: ${S.outflows.map(o=>labelOf(o.label)+" "+o.day).join(", ")||"none"}\nExpensive months: ${[...S.heavy].sort((a,b)=>a-b).map(m=>MON[m-1]).join(", ")||"none"}\n\n`+
  S.months.map(x=>`${MON[x.m]} ${x.y}: SIP ${fmt(x.debit)}${x.payday?", payday "+fmt(x.payday):""} → ${x.status==="ok"?"no reminder":"reminder on "+fmt(remDate(x))}${x.reasons.length?" ("+x.reasons.join("; ")+")":""}`).join("\n")+
- `\n\nRules applied: reminder 4 days before; skips need 3+ days' notice (Groww); a skip that would make 3 skipped or missed SIPs in a row is warned about, because it cancels the SIP.`}
+ `\n\nRules applied: reminder 5 days before (2 days before the free-skip deadline); skips need 3+ days' notice (Groww); a skip that would make 3 skipped or missed SIPs in a row is warned about, because it cancels the SIP.`}
 
 /* ---------- lock screen ---------- */
 const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 function ensureOn(){if(!S.protOn){syncPay();S.outflows=[];buildMonths();S.protOn=true}}
 function lock(kind){ensureOn();S.cancelled=false;const rm=reminders();const x=kind==="checkin"?(rm.find(y=>!isLate(y))||rm[0]||nextDebit()):nextDebit();let when,title,body,acts;
- if(kind==="checkin"){when=remDate(x);title=`${MONF[x.m]} SIP on ${dshort(x.debit)}`;body=`${reason(x)}. Pay less, skip or move it for free until ${dshort(x.deadline)}.`;acts=[["keep","Keep"],["pref",S.plan==="use_flex"?"Skip it":S.plan==="pay_less"?"Pay less":"Change date"]]}
+ if(kind==="checkin"){when=remDate(x);title=`${MONF[x.m]} SIP on ${dshort(x.debit)}`;body=`Last day to skip or pay less is ${DOW[x.deadline.getDay()]} ${dshort(x.deadline)}, ${relDay(x)}. ${reason(x)}.`;acts=[["keep","Keep"],["pref",S.plan==="use_flex"?"Skip it":S.plan==="pay_less"?"Pay less":"Change date"]]}
  else{when=addDays(x.debit,1);title=`${dshort(x.debit)} SIP didn't go through`;body="Your invested money is safe. Pay within 2 working days and it still goes through.";acts=[["later","Later"],["pay","Pay now"]];S.failMonth=x;if(!histFor(x))S.hist.push({d:x.debit,type:"failed"});S.failed=true}
  S.lockKind=kind;S.lockMonth=x;$("#lkHint").textContent="Tap the message to open it";$("#unlock").hidden=true;
  $("#lkTime").textContent=kind==="failed"?"9:00":"10:00";$("#lkDate").textContent=`${DAYS[when.getDay()]}, ${when.getDate()} ${MONF[when.getMonth()]}`;
