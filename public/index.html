@@ -236,6 +236,8 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 .vgrid small{display:block;color:var(--muted);font-size:12px}
 .vgrid b{font-size:15px;font-weight:535;font-variant-numeric:tabular-nums}
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acts .btn{height:40px;padding:0 12px;font-size:14px;border-radius:8px;white-space:nowrap}
+.acts .btn.line{border-color:var(--line);color:var(--g-ink)}
 .srow{display:flex;gap:12px;align-items:center;padding:12px 0;background:none;border:0;border-bottom:1px solid var(--line);width:100%;text-align:left;color:var(--ink);cursor:pointer}
 .srow .it{flex:1;min-width:0}.srow .it b{display:block;font-size:14.5px;font-weight:535}.srow .it small{display:block;color:var(--muted);font-size:12.5px}
 .hist{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -300,14 +302,21 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
  .stage{gap:12px}
  .side,.panel{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
  .panel{padding-top:12px}
- .mstep{display:grid;gap:6px;position:sticky;top:0;z-index:20;height:86px;align-content:center;background:var(--card);padding:0 10px;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(15,23,42,.06)}
+ .mstep{display:grid;gap:8px;position:sticky;top:0;z-index:20;height:120px;align-content:center;background:var(--card);padding:0 12px;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(15,23,42,.06)}
  .mhead{display:flex;align-items:baseline;gap:8px;padding:0 2px}
- .mhead b{font-size:14.5px;font-weight:600;color:var(--ink)}
- .mhead span{font-size:12px;color:var(--muted)}
- .mbtns{display:grid;grid-template-columns:1.55fr 1.55fr 1fr 1fr 1fr;gap:5px}
- .mstep button{font:535 12px/1.15 var(--sans);border:1px solid var(--g);background:var(--card);color:var(--g-ink);border-radius:10px;padding:4px 3px;height:42px;cursor:pointer;display:grid;place-items:center;text-align:center;min-width:0}
- .mstep button.cur{background:var(--g);color:#fff;border-color:var(--g)}
- .phone{width:auto;aspect-ratio:9/19;height:calc(100vh - 106px);height:calc(100dvh - 106px);min-height:520px;max-width:calc(100% - 24px);margin:8px auto;border-radius:30px;padding:7px}
+ .mhead b{font-size:15px;font-weight:600;color:var(--ink)}
+ .mhead span{font-size:12.5px;color:var(--muted)}
+ .mstep button{cursor:pointer;white-space:nowrap;min-width:0}
+ .mmain{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .mmain button{display:flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 8px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:535 13.5px var(--sans)}
+ .mmain button i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--g-soft);color:var(--g-ink);display:grid;place-items:center;font-size:12px;font-weight:600;flex:none}
+ .mmain button.cur{border-color:var(--g);background:var(--g-soft);color:var(--g-ink)}
+ .mmain button.cur i{background:var(--g);color:#fff}
+ .mmore{display:flex;align-items:center;gap:6px;padding:0 2px}
+ .mmore span{font-size:12.5px;color:var(--muted);margin-right:2px;white-space:nowrap}
+ .mmore button{height:28px;padding:0 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font:500 12.5px var(--sans)}
+ .mmore button.cur{border-color:var(--g);background:var(--g-soft);color:var(--g-ink)}
+ .phone{width:calc(100% - 20px);max-width:380px;height:calc(100vh - 142px);height:calc(100dvh - 142px);min-height:520px;margin:0 auto 10px;border-radius:30px;padding:6px}
  .screenwrap{border-radius:24px}
  .foot{padding:8px 12px 0}
 }
@@ -326,7 +335,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 </div></div>
 <div class="wrap">
  <section id="p-proto" role="tabpanel" aria-labelledby="t-proto" class="stage">
-  <div class="mstep" id="mstep" role="group" aria-labelledby="mstepT"><div class="mhead"><b id="mstepT">Try the flows</b><span>Tap a step, then use the phone</span></div><div class="mbtns"><button data-g="1" data-go="setup">1. Set up reminders</button><button data-g="2" data-go="checkin">2. Get a reminder</button><button data-g="3" data-go="skip">3. Skip</button><button data-g="4" data-go="failed">4. Fails</button><button data-g="5" data-go="cancel">5. Cancel</button></div></div>
+  <div class="mstep" id="mstep" role="group" aria-labelledby="mstepT"><div class="mhead"><b id="mstepT">Try the flows</b><span>Tap a step, then use the phone</span></div><div class="mmain"><button data-g="1" data-go="setup"><i>1</i>Set up reminders</button><button data-g="2" data-go="checkin"><i>2</i>Get a reminder</button></div><div class="mmore"><span>Also try</span><button data-g="3" data-go="skip">Skip a SIP</button><button data-g="4" data-go="failed">Payment fails</button><button data-g="5" data-go="cancel">Cancel</button></div></div>
   <div class="phone" aria-label="Phone prototype">
    <div class="screenwrap">
     <!-- APP -->
