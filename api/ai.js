@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const { prompt, json } = req.body || {};
   if (!prompt || typeof prompt !== "string" || prompt.length > 12000) return res.status(400).json({ code: "bad_input" });
   const key = process.env.GEMINI_API_KEY; if (!key) return res.status(500).json({ code: "no_key" });
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const body = { contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { temperature: 0, ...(json ? { responseMimeType: "application/json" } : {}) } };
   for (let attempt = 0; attempt < 3; attempt++) {
