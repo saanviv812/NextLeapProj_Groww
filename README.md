@@ -2,7 +2,10 @@
 
 - `public/index.html`: the SIP Fit MVP, at the site's main link.
 - `public/discovery.html`: the AI Discovery Engine, at /discovery.html.
-- `api/ai.js`: a small server function that calls Google Gemini. The API key stays on the server, so it never appears in the browser.
+- `api/ai.js`: a small server function that calls the AI. API keys stay on the server and never appear in the browser.
 
-The key goes in Vercel → Project → Settings → Environment Variables, named `GEMINI_API_KEY`.
-To use a different model, also set `GEMINI_MODEL` (the default is `gemini-2.5-flash`).
+AI providers (both free, no billing needed):
+- `GROQ_API_KEY` (primary): from console.groq.com. Model `openai/gpt-oss-120b`; override it with `GROQ_MODEL`.
+- `GEMINI_API_KEY` (backup): used if Groq is busy. Override the model with `GEMINI_MODEL`.
+
+If the AI doesn't reply within a few seconds, the app carries on with the person's taps.

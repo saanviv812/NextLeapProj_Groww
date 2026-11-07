@@ -494,9 +494,10 @@ function checkParse(o){const w=[];
  if(!["fixed","variable","unknown"].includes(o.income))w.push("unknown income type");
  w.push(...bannedHits(String(o.question||"")+" "+(o.outflows||[]).map(x=>x.label).join(" ")));
  return w}
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))]);
 async function readSentence(text){const r=redact(text);const s=await samplePromise;
  if(!s)return{err:"unavailable",redacted:r.count,sent:r.text};
- try{const o=await s.json(PARSE_PROMPT(r.text),{modelTier:"default"});const w=checkParse(o);return{o,guard:w,redacted:r.count,sent:r.text}}
+ try{const o=await withTimeout(s.json(PARSE_PROMPT(r.text),{modelTier:"default"}),S.evalMode?30000:7000);const w=checkParse(o);return{o,guard:w,redacted:r.count,sent:r.text}}
  catch(e){return{err:e&&e.code||"error",redacted:r.count,sent:r.text}}}
 
 /* ============ AI: reply reader ============ */
@@ -515,7 +516,7 @@ function checkReply(o){const w=[];if(!o||typeof o!=="object")return["not a valid
  w.push(...bannedHits(String(o.reply||"")));return w}
 async function readReply(text,stage){const r=redact(text);const adviceRule=ADVICE_RX.test(r.text);const s=await samplePromise;
  let o=null,guard=[],err=null;
- if(!s)err="unavailable";else{try{o=await s.json(REPLY_PROMPT(r.text,stage),{modelTier:"default"});guard=checkReply(o)}catch(e){err=e&&e.code||"error"}}
+ if(!s)err="unavailable";else{try{o=await withTimeout(s.json(REPLY_PROMPT(r.text,stage),{modelTier:"default"}),S.evalMode?30000:7000);guard=checkReply(o)}catch(e){err=e&&e.code||"error"}}
  let res,source;
  if(o&&!guard.length){let op=o.options.slice();const named=/\bskip\b/i.test(r.text)?"use_flex":/\b(pay|paying) (less|a smaller)\b/i.test(r.text)?"pay_less":/\b(move|change|shift)\b[^.?!]{0,20}\bdate\b/i.test(r.text)?"move_date":null;if(named&&o.scope==="in_scope"){op=[named,...op.filter(x=>x!==named)]}res={...o,options:op.slice(0,3)};source="ai";if(adviceRule&&res.scope==="in_scope"){res.scope="advice_request";res.options=[];res.ruleCaught=true}}
  else{source="fallback";res={scope:adviceRule?"advice_request":"in_scope",options:adviceRule?[]:(stage==="after_failure"?["pay_pending","use_flex","move_date"]:["use_flex","pay_less","move_date"]),reply:""}}
@@ -705,7 +706,7 @@ function renderSetup(){const s=S.setupStep,ed=S.editing;let b="",title="";
  if(s===2){title="Any months that cost more?";const t=new Date();b=`<p class="muted">Like weddings, festivals or school fees.</p><div class="chips">${Array.from({length:12},(_,i)=>(t.getMonth()+1+i)%12).map(m=>`<button class="chip" data-hm="${m+1}" aria-pressed="${S.heavyPick.has(m+1)}">${MON[m]}</button>`).join("")}</div>`}
  if(s===3){title="Last one";b=`<div style="display:grid;gap:6px"><label class="lab" for="txt">Any bills early in the month? <span class="muted">Optional</span></label><textarea class="f" id="txt" maxlength="400" placeholder="Rent on the 5th, card bill on the 18th">${esc(S.text)}</textarea></div>
   <div class="lab">In a tight month, I'd rather</div>${[["pay_less","Pay a smaller amount that month"],["use_flex","Skip that month"],["move_date","Change my SIP date"]].map(([v,t])=>`<button class="opt" role="radio" aria-checked="${S.plan===v}" data-plan="${v}"><span class="dot"></span><span><b>${t}</b></span></button>`).join("")}`}
- if(s===4){const rm=reminders();b=`<div class="done"><div class="tick">✓</div><h3 id="setupTitle">Reminders are on</h3><p class="muted">${rm.length?`We'll remind you before your ${[...new Set(rm.map(x=>MONF[x.m]))].join(" and ")} SIP${rm.length>1?"s":""}.`:"Your SIP date already suits your payday."}</p></div>`}
+ if(s===4){const rm=reminders();b=`<div class="done"><div class="tick">✓</div><h3 id="setupTitle">Reminders are on</h3><p class="muted">${rm.length?`We'll remind you before your ${(l=>l.length>1?l.slice(0,-1).join(", ")+" and "+l[l.length-1]:l[0])([...new Set(rm.map(x=>MONF[x.m]))])} SIP${rm.length>1?"s":""}.`:"Your SIP date already suits your payday."}</p></div>`}
  const prog=s>=1&&s<=3&&!ed?`<div class="prog"><i style="width:${s*33.4}%"></i></div>`:"";
  const foot=s===4?`<button class="btn" data-st="finish">Done</button>`:ed?`<button class="btn" data-st="save">Save</button>`:`<button class="btn" data-st="${s<3?"next":"build"}">${s<3?"Next":"Turn on reminders"}</button>`;
  $("#shSetup").innerHTML=`<div class="grab"></div><div class="shead">${s>=1&&s<=3&&!ed?`<button class="back" data-st="back" aria-label="Back">‹</button>`:""}${prog}${title?`<h3 id="setupTitle">${title}</h3>`:""}</div><div class="sbody">${b}</div><div class="sfoot" style="flex-direction:column;gap:6px">${foot}</div>`}
@@ -719,7 +720,7 @@ $("#shSetup").onclick=async e=>{const t=e.target.closest("button");if(!t)return;
  if(st==="close")return closeSheets();
  if(st==="back"){if(S.setupStep===3)S.text=$("#txt").value;if(S.setupStep===1)return closeSheets();S.setupStep--;renderSetup();return}
  if(st==="next"){S.setupStep++;renderSetup();return}
- if(st==="build"||st==="save"){if($("#txt"))S.text=$("#txt").value.trim();t.disabled=true;t.textContent="Saving…";await buildMap();S.protOn=true;
+ if(st==="build"||st==="save"){if($("#txt"))S.text=$("#txt").value.trim();t.disabled=true;t.textContent="Saving…";try{await buildMap()}catch(e){}finally{t.disabled=false}S.protOn=true;
   if(st==="save"){S.editing=false;closeSheets();render();toast("Saved")}else{S.setupStep=4;renderSetup();render()}}
  if(st==="finish"){closeSheets();S.setupStep=1;render();guideCur(2)}};
 async function buildMap(){readSettings();syncPay();S.outflows=[];S.conflict="";S.keepDate=false;
@@ -834,7 +835,7 @@ function scoreB(c,r){const ids=r.res.options||[],fails=[];
 let stopFlag=false;$("#stopEval").onclick=()=>{stopFlag=true};
 $("#runEval").onclick=async()=>{const st=$("#evalStat");if(!(await samplePromise)){st.textContent="The AI isn't reachable right now. Try again in a minute.";return}
  stopFlag=false;$("#runEval").disabled=true;$("#stopEval").hidden=false;$("#tA tbody").innerHTML="";$("#tB tbody").innerHTML="";
- const RA=[],RB=[];let k=0;const total=A.length+B.length;
+ const RA=[],RB=[];let k=0;const total=A.length+B.length;S.evalMode=true;
  const q=[...A.map(c=>({k:"A",c})),...B.map(c=>({k:"B",c}))];
  const worker=async()=>{while(q.length&&!stopFlag){const {k:kind,c}=q.shift();
   if(kind==="A"){const r=await readSentence(c.t);if(r.err==="not_granted"||r.err==="rate_limited")stopFlag=true;const s=scoreA(c,r);RA.push({c,r,s});
@@ -843,8 +844,8 @@ $("#runEval").onclick=async()=>{const st=$("#evalStat");if(!(await samplePromise
    $("#tA tbody").insertAdjacentHTML("beforeend",`<tr><td class="num">${c.id}</td><td>${esc(c.t)}</td><td class="small">${exp}</td><td class="small">${got}</td><td class="${s.pass?"pass":"fail"}">${s.pass?"Pass":"Fail"}<div class="small">${Object.entries(s.f).filter(([,v])=>!v).map(([k])=>k).join(", ")}</div></td></tr>`)}
   else{const r=await readReply(c.t,c.st);if(r.err==="not_granted"||r.err==="rate_limited")stopFlag=true;const s=scoreB(c,r);RB.push({c,r,s});
    $("#tB tbody").insertAdjacentHTML("beforeend",`<tr><td class="num">${c.id}</td><td>${esc(c.t)}<div class="small">${c.st==="after_failure"?"after a failed debit":"before a debit"}</div></td><td class="small">${c.scope.join(" / ")}${c.must?"<br>needs "+c.must.join(", "):""}${c.any?"<br>one of "+c.any.join(", "):""}</td><td class="small">${esc(r.res.scope)}<br>${s.ids.join(", ")||"no options"}</td><td class="small">${r.source==="ai"?"passed":r.err?"AI unavailable ("+esc(r.err)+")":"blocked: "+esc(r.guard.join("; "))}${r.res.ruleCaught?"<br>advice rule caught it":""}</td><td class="${s.pass?"pass":"fail"}">${s.pass?"Pass":"Fail"}<div class="small">${esc(s.fails.join(", "))}</div></td></tr>`)}
-  k++;st.textContent=`${k} of ${total} done…`}};
- await Promise.all([worker(),worker()]);$("#runEval").disabled=false;$("#stopEval").hidden=true;
+  k++;st.textContent=`${k} of ${total} done…`;await new Promise(z=>setTimeout(z,2500))}};
+ await worker();S.evalMode=false;$("#runEval").disabled=false;$("#stopEval").hidden=true;
  const rate=(arr,key)=>{const v=arr.filter(x=>key in x.s.f);return v.length?v.filter(x=>x.s.f[key]).length/v.length:null};
  const m={payday:rate(RA,"payday"),heavy:rate(RA,"heavy"),outflows:rate(RA,"outflows"),ask:rate(RA,"ask"),
   replies:RB.length?RB.filter(x=>!x.s.fails.length).length/RB.length:null,
@@ -889,8 +890,8 @@ $("#judgePrompt").textContent=JUDGE("{message}");
 $("#tC tbody").innerHTML=TONE.map(([m,l],i)=>`<tr><td class="num">${i+1}</td><td>${esc(m)}</td><td>${l}</td><td id="j${i}">–</td><td id="a${i}">–</td></tr>`).join("");
 $("#runJudge").onclick=async()=>{const st=$("#judgeStat");if(!(await samplePromise)){st.textContent="The AI isn't reachable right now. Try again in a minute.";return}
  $("#runJudge").disabled=true;let k=0,agree=0,done=0;const q=TONE.map((c,i)=>i);const res=[];
- const w=async()=>{while(q.length){const i=q.shift();const j=await judge(TONE[i][0]);res[i]=j;done++;if(j===TONE[i][1])agree++;$("#j"+i).textContent=j||"error";$("#a"+i).innerHTML=j===TONE[i][1]?'<span class="pass">Yes</span>':'<span class="fail">No</span>';st.textContent=`${done} of ${TONE.length} done…`}};
- await Promise.all([w(),w()]);$("#runJudge").disabled=false;const pct=Math.round(agree/TONE.length*100);st.innerHTML=`Agreement with human labels: <b class="${pct>=90?"pass":"fail"}">${pct}%</b> (${agree} of ${TONE.length}). ${pct>=90?"The judge can be trusted for this check.":"Below 90%: refine the judge prompt, then rerun."}`;
+ const w=async()=>{while(q.length){const i=q.shift();const j=await judge(TONE[i][0]);res[i]=j;done++;if(j===TONE[i][1])agree++;$("#j"+i).textContent=j||"error";$("#a"+i).innerHTML=j===TONE[i][1]?'<span class="pass">Yes</span>':'<span class="fail">No</span>';st.textContent=`${done} of ${TONE.length} done…`;await new Promise(z=>setTimeout(z,2500))}};
+ await w();$("#runJudge").disabled=false;const pct=Math.round(agree/TONE.length*100);st.innerHTML=`Agreement with human labels: <b class="${pct>=90?"pass":"fail"}">${pct}%</b> (${agree} of ${TONE.length}). ${pct>=90?"The judge can be trusted for this check.":"Below 90%: refine the judge prompt, then rerun."}`;
  const db=await dbPromise;if(db){try{await db.collection("judge_runs").add({at:new Date().toISOString(),agreement:agree/TONE.length,results:TONE.map((c,i)=>({id:i+1,human:c[1],judge:res[i]||null}))})}catch(e){}}};
 /* start */
 syncPay();readSettings();buildMonths();setView('sip');guideCur(1);logRules();

@@ -1,14 +1,17 @@
-/* Replaces the claude.ai-only runtime with this site's own AI endpoint (/api/ai, Gemini behind it). */
+/* Connects the pages to this site's AI endpoint (/api/ai). The server tries Groq first, then Gemini. */
 (function(){
   async function call(input,json){
-    const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:String(input),json:!!json})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){throw {code:d.code||(r.status===429?"rate_limited":"error"),message:d.message||""}}
-    return d.text||"";
+    for(let i=0;i<2;i++){
+      const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:String(input),json:!!json})});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok)return d.text||"";
+      if(i===0&&(r.status===429||r.status===503)){await new Promise(s=>setTimeout(s,1500));continue}
+      throw {code:r.status===429?"rate_limited":(d.code||"error")};
+    }
   }
   function strip(t){return String(t).trim().replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"")}
   const sample=async(input)=>({text:await call(input,false),truncated:false});
-  sample.json=async(input)=>{const t=await call(input,true);try{return JSON.parse(strip(t))}catch(e){throw {code:"bad_json"}}};
+  sample.json=async(input)=>{const t=await call(input,true);try{return JSON.parse(strip(t))}catch(e){const m=strip(t).match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0])}catch(_){}}throw {code:"bad_json"}}};
   /* Saved test runs stay in this browser only. */
   function coll(name){const key="sipfit_"+name;const read=()=>{try{return JSON.parse(localStorage.getItem(key)||"[]")}catch(e){return[]}};
     const q={_o:null,_l:50,orderBy(f,dir){this._o=[f,dir];return this},limit(n){this._l=n;return this},
