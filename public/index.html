@@ -284,6 +284,31 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 .btn.inline{width:auto}.btn.ghost{background:transparent;color:var(--g-ink);border:1px solid var(--g)}
 .fbrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim,.toast{transition:none}.enter,.unlock,.spin{animation:none}}
+
+/* ---------- on a real phone: app fills the screen, steps sit in a sticky bar above it ---------- */
+.mstep{display:none}
+@media (max-width:600px){
+ .band{padding-block:14px 14px}
+ .band-in{gap:8px}
+ .eyebrow{font-size:12px}
+ .band h1{font-size:24px}
+ .band .hsub{font-size:14px}
+ .band .hnote{font-size:12px}
+ nav.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));justify-self:stretch;flex-wrap:nowrap}
+ nav.tabs button{padding:8px 4px;font-size:13px;white-space:nowrap}
+ .wrap{margin-top:0;padding:0 0 24px;gap:12px}
+ .stage{gap:12px}
+ .side,.panel{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+ .panel{padding-top:12px}
+ .mstep{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;position:sticky;top:0;z-index:20;height:52px;align-items:center;background:var(--page);padding:0 10px;border-bottom:1px solid var(--line)}
+ .mstep button{font:535 12px/1.1 var(--sans);border:1px solid var(--g);background:var(--card);color:var(--g-ink);border-radius:10px;padding:5px 2px;cursor:pointer;display:grid;justify-items:center;gap:1px;min-width:0}
+ .mstep button i{font-style:normal;font-size:10.5px;font-weight:500;opacity:.75}
+ .mstep button.cur{background:var(--g);color:#fff;border-color:var(--g)}
+ .phone{max-width:none;height:calc(100vh - 52px);height:calc(100dvh - 52px);min-height:520px;border-radius:0;padding:0;background:none;box-shadow:none}
+ .screenwrap{border-radius:0}
+ #sc-app>.sbar{display:none}
+ .foot{padding:8px 12px 0}
+}
 </style>
 
 <div class="band"><div class="band-in">
@@ -299,6 +324,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 </div></div>
 <div class="wrap">
  <section id="p-proto" role="tabpanel" aria-labelledby="t-proto" class="stage">
+  <div class="mstep" id="mstep" role="group" aria-label="Try the flows"><button data-g="1" data-go="setup"><i>Step 1</i>Set up</button><button data-g="2" data-go="checkin"><i>Step 2</i>Reminder</button><button data-g="3" data-go="skip"><i>Step 3</i>Skip</button><button data-g="4" data-go="failed"><i>Step 4</i>Fails</button><button data-g="5" data-go="cancel"><i>Step 5</i>Cancel</button></div>
   <div class="phone" aria-label="Phone prototype">
    <div class="screenwrap">
     <!-- APP -->
@@ -608,7 +634,7 @@ function show(id){$("#sc-app").hidden=id!=="app";$("#sc-lock").hidden=id!=="lock
 function openSheet(id){$("#toast").classList.remove("on");$("#scrim").classList.add("on");SHEETS.forEach(s=>$(s).classList.toggle("on",s===id))}
 function closeSheets(){if($("#txt"))S.text=$("#txt").value;$("#scrim").classList.remove("on");SHEETS.forEach(s=>$(s).classList.remove("on"))}
 $("#scrim").onclick=closeSheets;document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheets()});
-function guideCur(n){document.querySelectorAll("#guide li").forEach(li=>li.classList.toggle("cur",+li.dataset.g===n))}
+function guideCur(n){document.querySelectorAll("#guide li,#mstep [data-g]").forEach(li=>li.classList.toggle("cur",+li.dataset.g===n))}
 function setView(v){S.view=v;$("#abTitle").textContent=v==="rem"?"SIP reminders":"SIP details";render();$("#appBody").scrollTop=0}
 $("#abBack").onclick=()=>{if(S.view==="rem")setView("sip")};
 
@@ -771,8 +797,9 @@ function go(k){closeSheets();show("app");if(k!=="setup"){ensureOn();baseState()}
  else if(k==="third"){const x=nextDebit();[1,2].forEach(k2=>S.hist.push({d:new Date(x.debit.getFullYear(),x.debit.getMonth()-k2,S.deb),type:"skipped"}));render();skipFlow(x);guideCur(3)}
  else if(k==="cancel"){cancelFlow();guideCur(5)}
  else lock(k)}
-document.querySelectorAll("#guide [data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
-$("#amt").onchange=$("#deb").onchange=()=>{readSettings();buildMonths();render();logRules()};
+const onPhone=()=>matchMedia("(max-width:600px)").matches;
+function toPhone(){if(onPhone())$("#mstep").scrollIntoView({block:"start"})}
+document.querySelectorAll("#guide [data-go],#mstep [data-go]").forEach(b=>b.onclick=()=>{go(b.dataset.go);toPhone()});$("#amt").onchange=$("#deb").onchange=()=>{readSettings();buildMonths();render();logRules()};
 $("#reset").onclick=()=>{Object.assign(S,{protOn:false,failed:false,cancelled:false,checkEvery:false,keepDate:false,outflows:[],conflict:"",mode:"fixed",fixedDay:1,varBy:null,heavyPick:new Set([2]),setupStep:1,plan:"pay_less",view:"sip",hist:[],editing:false,less:{}});$("#deb").value=1;$("#amt").value=2000;syncPay();closeSheets();show("app");readSettings();buildMonths();setView("sip");guideCur(1);toast("Demo reset")};
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav.tabs button").forEach(x=>{x.setAttribute("aria-selected",x===b);$("#"+x.getAttribute("aria-controls")).hidden=x!==b});if(b.id==="t-eval")loadRuns()});
 
