@@ -285,7 +285,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 .fbrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim,.toast{transition:none}.enter,.unlock,.spin{animation:none}}
 
-/* ---------- on a real phone: app fills the screen, steps sit in a sticky bar above it ---------- */
+/* ---------- on a real phone: "Try the flows" sticks to the top, the framed phone fits the screen below it ---------- */
 .mstep{display:none}
 @media (max-width:600px){
  .band{padding-block:14px 14px}
@@ -300,13 +300,15 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
  .stage{gap:12px}
  .side,.panel{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
  .panel{padding-top:12px}
- .mstep{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;position:sticky;top:0;z-index:20;height:52px;align-items:center;background:var(--page);padding:0 10px;border-bottom:1px solid var(--line)}
- .mstep button{font:535 12px/1.1 var(--sans);border:1px solid var(--g);background:var(--card);color:var(--g-ink);border-radius:10px;padding:5px 2px;cursor:pointer;display:grid;justify-items:center;gap:1px;min-width:0}
- .mstep button i{font-style:normal;font-size:10.5px;font-weight:500;opacity:.75}
+ .mstep{display:grid;gap:6px;position:sticky;top:0;z-index:20;height:86px;align-content:center;background:var(--card);padding:0 10px;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(15,23,42,.06)}
+ .mhead{display:flex;align-items:baseline;gap:8px;padding:0 2px}
+ .mhead b{font-size:14.5px;font-weight:600;color:var(--ink)}
+ .mhead span{font-size:12px;color:var(--muted)}
+ .mbtns{display:grid;grid-template-columns:1.55fr 1.55fr 1fr 1fr 1fr;gap:5px}
+ .mstep button{font:535 12px/1.15 var(--sans);border:1px solid var(--g);background:var(--card);color:var(--g-ink);border-radius:10px;padding:4px 3px;height:42px;cursor:pointer;display:grid;place-items:center;text-align:center;min-width:0}
  .mstep button.cur{background:var(--g);color:#fff;border-color:var(--g)}
- .phone{max-width:none;height:calc(100vh - 52px);height:calc(100dvh - 52px);min-height:520px;border-radius:0;padding:0;background:none;box-shadow:none}
- .screenwrap{border-radius:0}
- #sc-app>.sbar{display:none}
+ .phone{width:auto;aspect-ratio:9/19;height:calc(100vh - 106px);height:calc(100dvh - 106px);min-height:520px;max-width:calc(100% - 24px);margin:8px auto;border-radius:30px;padding:7px}
+ .screenwrap{border-radius:24px}
  .foot{padding:8px 12px 0}
 }
 </style>
@@ -324,7 +326,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 </div></div>
 <div class="wrap">
  <section id="p-proto" role="tabpanel" aria-labelledby="t-proto" class="stage">
-  <div class="mstep" id="mstep" role="group" aria-label="Try the flows"><button data-g="1" data-go="setup"><i>Step 1</i>Set up</button><button data-g="2" data-go="checkin"><i>Step 2</i>Reminder</button><button data-g="3" data-go="skip"><i>Step 3</i>Skip</button><button data-g="4" data-go="failed"><i>Step 4</i>Fails</button><button data-g="5" data-go="cancel"><i>Step 5</i>Cancel</button></div>
+  <div class="mstep" id="mstep" role="group" aria-labelledby="mstepT"><div class="mhead"><b id="mstepT">Try the flows</b><span>Tap a step, then use the phone</span></div><div class="mbtns"><button data-g="1" data-go="setup">1. Set up reminders</button><button data-g="2" data-go="checkin">2. Get a reminder</button><button data-g="3" data-go="skip">3. Skip</button><button data-g="4" data-go="failed">4. Fails</button><button data-g="5" data-go="cancel">5. Cancel</button></div></div>
   <div class="phone" aria-label="Phone prototype">
    <div class="screenwrap">
     <!-- APP -->
