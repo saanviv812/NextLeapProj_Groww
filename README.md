@@ -1,6 +1,6 @@
-# SIP Fit: public deployment
+# Our MVP, called SIP Fit: public deployment
 
-- `public/index.html`: the SIP Fit MVP, at the site's main link.
+- `public/index.html`: the SIP Fit prototype, at the site's main link.
 - `public/discovery.html`: the AI Discovery Engine, at /discovery.html.
 - `api/ai.js`: a small server function that calls the AI. API keys stay on the server and never appear in the browser.
 
