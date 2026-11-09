@@ -305,7 +305,7 @@ function showResult(o,warn){
   ${row("How they felt",esc(say("emotion",o.emotion)),"The least reliable answer: people often disagree on this too")}
   ${o.unmet_need?row("What they wanted",esc(o.unmet_need)):""}
  </div>
- ${o.evidence_quote?`<div><div class="rl" style="margin-bottom:6px">Proof from the post</div><div class="proof">"${esc(o.evidence_quote)}"</div></div>`:""}
+ ${o.evidence_quote?`<div><div class="rl" style="margin-bottom:6px">Exact quote from the post</div><div class="proof">"${esc(o.evidence_quote)}"</div></div>`:""}
  <div><div class="rl" style="margin-bottom:6px">Checks</div><ul class="clist">${checks.map(([k,i,t])=>`<li><span class="${k}">${i}</span><span>${t}</span></li>`).join("")}</ul></div>
  <p class="small">How sure the AI is: ${esc(say("confidence",o.confidence))}</p></div>`}
 $("#f").onsubmit=async e=>{e.preventDefault();const b=$("#go"),out=$("#out"),text=$("#txt").value.trim();
